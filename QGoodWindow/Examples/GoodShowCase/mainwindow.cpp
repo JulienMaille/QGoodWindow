@@ -131,8 +131,16 @@ MainWindow::MainWindow(QWidget *parent) : QGoodWindow(parent)
     setWindowIcon(qApp->style()->standardIcon(QStyle::SP_DesktopIcon));
     setWindowTitle("Good Window - CTRL+S toggle theme - CTRL+T toggle title bar!");
 
+    /*
     resize(m_central_widget->size());
     move(QGuiApplication::primaryScreen()->availableGeometry().center() - rect().center());
+    */
+    QSettings settings("QGoodWindow", "MainWindow");
+    restoreGeometry(settings.value("geometry").toByteArray());
+    restoreState(settings.value("windowState").toByteArray());
+    QTimer::singleShot(0, this, [=] {
+        m_central_widget->ui->label->setText(QString("width=%1, height=%2").arg(width()).arg(height()));
+    });
 }
 
 MainWindow::~MainWindow()
@@ -190,7 +198,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     msgbox.setIcon(QMessageBox::Question);
     msgbox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
     msgbox.setDefaultButton(QMessageBox::No);
-    msgbox.setText("Are you sure to close?");
+    msgbox.setText(QString("Are you sure to close?\n\nwidth=%1, height=%2").arg(width()).arg(height()));
 
     int result = QGoodCentralWidget::execDialogWithWindow(&msgbox, this, m_good_central_widget);
 
@@ -199,4 +207,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
         event->ignore();
         return;
     }
+
+    QSettings settings("QGoodWindow", "MainWindow");
+    settings.setValue("geometry", saveGeometry());
+    settings.setValue("windowState", saveState());
+    QMainWindow::closeEvent(event);
 }
